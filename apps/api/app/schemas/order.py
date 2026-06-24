@@ -3,10 +3,12 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class OrderCreateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     notes: Optional[str] = None
     shipping_address: Optional[dict] = None
 

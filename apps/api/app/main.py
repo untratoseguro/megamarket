@@ -1,3 +1,7 @@
+from app.core.logging_config import setup_logging
+
+setup_logging()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler

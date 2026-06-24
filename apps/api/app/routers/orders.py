@@ -1,8 +1,9 @@
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.core.rate_limit import get_user_or_ip_key, limiter
 from app.core.supabase import get_supabase
 from app.deps.auth import require_auth
 from app.schemas.order import OrderCreateIn, OrderDetailOut, OrderItemOut, OrderOut
@@ -11,7 +12,8 @@ router = APIRouter(tags=["orders"])
 
 
 @router.post("", response_model=OrderDetailOut, status_code=201)
-def create_order(body: OrderCreateIn, profile: dict = Depends(require_auth)):
+@limiter.limit("10/minute", key_func=get_user_or_ip_key)
+def create_order(request: Request, body: OrderCreateIn, profile: dict = Depends(require_auth)):
     sb = get_supabase()
     user_id = profile["id"]
 

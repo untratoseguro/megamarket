@@ -6,11 +6,13 @@ from decimal import Decimal
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ── Categories ────────────────────────────────────────────────────────────────
 
 class CategoryIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(min_length=1, max_length=120)
     slug: Optional[str] = None
     parent_id: Optional[UUID] = None
@@ -35,6 +37,8 @@ class CategoryOut(BaseModel):
 
 
 class CategoryAttrIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(min_length=1, max_length=80)
     type: Literal["text", "number", "select", "boolean"]
     options_json: Optional[list[str]] = None
@@ -62,6 +66,8 @@ class ProductIn(BaseModel):
     Usado tanto por el CRUD individual como por el worker de imports —
     no duplicar validación en ningún lado.
     """
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(min_length=1, max_length=255)
     slug: Optional[str] = None               # auto-generado desde title si None
     sku: str = Field(min_length=1, max_length=100)
@@ -86,6 +92,8 @@ class ProductIn(BaseModel):
 
 
 class ProductVariantIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     sku: str = Field(min_length=1, max_length=100)
     attributes_json: dict = Field(default_factory=dict)
     price: Optional[Decimal] = Field(None, gt=0)
@@ -111,6 +119,8 @@ class ProductAdminOut(BaseModel):
 # ── Inventory ─────────────────────────────────────────────────────────────────
 
 class StockAdjustIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     product_id: UUID
     variant_id: Optional[UUID] = None
     delta: int = Field(..., description="Cantidad a sumar (positivo) o restar (negativo)")
@@ -133,6 +143,8 @@ VALID_ORDER_STATUSES = {
 
 
 class OrderStatusIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     status: str
     justification: str = Field(min_length=5, max_length=500)
 
@@ -158,6 +170,8 @@ class AdminOrderOut(BaseModel):
 # ── Coupons ───────────────────────────────────────────────────────────────────
 
 class CouponIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     code: str = Field(min_length=2, max_length=50)
     type: Literal["percentage", "fixed"]
     value: Decimal = Field(gt=0)

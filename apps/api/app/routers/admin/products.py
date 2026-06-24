@@ -85,7 +85,15 @@ def create_product(body: ProductIn, admin=Depends(require_admin)):
     data["compare_at_price"] = float(body.compare_at_price) if body.compare_at_price else None
 
     result = sb.table("products").insert(data).execute()
-    return result.data[0]
+    product = result.data[0]
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "create",
+        "entity": "products",
+        "entity_id": str(product["id"]),
+        "diff_json": {"title": product["title"], "sku": product["sku"], "price": str(body.price)},
+    }).execute()
+    return product
 
 
 @router.get("/{product_id}", response_model=ProductDetail)
@@ -116,6 +124,13 @@ def update_product(product_id: UUID, body: ProductIn, admin=Depends(require_admi
     result = sb.table("products").update(data).eq("id", str(product_id)).execute()
     if not result.data:
         raise HTTPException(404, "Producto no encontrado")
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "update",
+        "entity": "products",
+        "entity_id": str(product_id),
+        "diff_json": {"title": body.title, "sku": body.sku, "price": str(body.price), "is_active": body.is_active},
+    }).execute()
     return result.data[0]
 
 
@@ -123,9 +138,19 @@ def update_product(product_id: UUID, body: ProductIn, admin=Depends(require_admi
 def delete_product(product_id: UUID, admin=Depends(require_admin)):
     """Soft-delete: deshabilita el producto (no elimina del DB para preservar order_items)."""
     sb = get_supabase()
+    existing = sb.table("products").select("title, sku").eq("id", str(product_id)).limit(1).execute().data
+    if not existing:
+        raise HTTPException(404, "Producto no encontrado")
     result = sb.table("products").update({"is_active": False}).eq("id", str(product_id)).execute()
     if not result.data:
         raise HTTPException(404, "Producto no encontrado")
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "soft_delete",
+        "entity": "products",
+        "entity_id": str(product_id),
+        "diff_json": {"title": existing[0]["title"], "sku": existing[0]["sku"], "is_active": False},
+    }).execute()
 
 
 # ── Variants CRUD ─────────────────────────────────────────────────────────────

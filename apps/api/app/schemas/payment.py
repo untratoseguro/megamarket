@@ -1,10 +1,12 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PaymentCreateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     order_id: UUID
 
 

@@ -30,6 +30,7 @@ from typing import Optional
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.core.rate_limit import get_user_or_ip_key, limiter
 from app.core.settings import settings
 from app.core.supabase import get_supabase
 from app.deps.auth import require_auth
@@ -57,7 +58,7 @@ def _paypal_access_token() -> str:
             data={"grant_type": "client_credentials"},
         )
     if resp.status_code != 200:
-        logger.error("PayPal token error: %s", resp.text)
+        logger.error("PayPal token error: status=%s", resp.status_code)
         raise HTTPException(502, "Error al conectar con PayPal")
     return resp.json()["access_token"]
 
@@ -102,7 +103,7 @@ def _paypal_create_order(
             },
         )
     if resp.status_code not in (200, 201):
-        logger.error("PayPal create-order error: %s", resp.text)
+        logger.error("PayPal create-order error: status=%s", resp.status_code)
         raise HTTPException(502, "Error al crear orden en PayPal")
     return resp.json()
 
@@ -150,7 +151,7 @@ async def _paypal_verify_webhook(request: Request, raw_body: bytes) -> bool:
         )
 
     if resp.status_code != 200:
-        logger.warning("PayPal webhook verify failed: %s", resp.text)
+        logger.warning("PayPal webhook verify failed: status=%s", resp.status_code)
         return False
 
     status = resp.json().get("verification_status", "")
@@ -171,7 +172,7 @@ async def _paypal_capture(paypal_order_id: str) -> Optional[dict]:
         )
     if resp.status_code in (200, 201):
         return resp.json()
-    logger.error("PayPal capture error (%s): %s", paypal_order_id, resp.text)
+    logger.error("PayPal capture error: order=%s status=%s", paypal_order_id, resp.status_code)
     return None
 
 
@@ -209,7 +210,7 @@ def _wompi_create_payment_link(
             },
         )
     if resp.status_code not in (200, 201):
-        logger.error("Wompi create-link error: %s", resp.text)
+        logger.error("Wompi create-link error: status=%s", resp.status_code)
         raise HTTPException(502, "Error al crear link de pago en Wompi")
     return resp.json().get("data", {})
 
@@ -319,7 +320,8 @@ def _update_payment_and_order(payment_id: str, order_id: str, pay_status: str, o
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/paypal/create-order", response_model=PayPalOrderOut, status_code=201)
-def create_paypal_order(body: PaymentCreateIn, profile: dict = Depends(require_auth)):
+@limiter.limit("5/minute", key_func=get_user_or_ip_key)
+def create_paypal_order(request: Request, body: PaymentCreateIn, profile: dict = Depends(require_auth)):
     order = _verify_order_for_payment(str(body.order_id), profile["id"])
     order_id = order["id"]
     total_usd = float(order["total"])
@@ -445,7 +447,8 @@ async def paypal_webhook(request: Request):
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/wompi/create-transaction", response_model=WompiTransactionOut, status_code=201)
-def create_wompi_transaction(body: PaymentCreateIn, profile: dict = Depends(require_auth)):
+@limiter.limit("5/minute", key_func=get_user_or_ip_key)
+def create_wompi_transaction(request: Request, body: PaymentCreateIn, profile: dict = Depends(require_auth)):
     order = _verify_order_for_payment(str(body.order_id), profile["id"])
     order_id = order["id"]
     total_usd = float(order["total"])

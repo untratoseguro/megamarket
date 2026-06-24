@@ -1,10 +1,12 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     session_id: Optional[UUID] = None
     message: str = Field(min_length=1, max_length=4000)
 

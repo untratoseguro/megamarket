@@ -47,7 +47,15 @@ def create_category(body: CategoryIn, admin=Depends(require_admin)):
     data["slug"] = slug
     data["parent_id"] = str(data["parent_id"]) if data.get("parent_id") else None
     result = sb.table("categories").insert(data).execute()
-    return result.data[0]
+    cat = result.data[0]
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "create",
+        "entity": "categories",
+        "entity_id": str(cat["id"]),
+        "diff_json": {"name": cat["name"], "slug": cat["slug"]},
+    }).execute()
+    return cat
 
 
 @router.patch("/{category_id}", response_model=CategoryOut)
@@ -59,16 +67,33 @@ def update_category(category_id: UUID, body: CategoryIn, admin=Depends(require_a
     result = sb.table("categories").update(data).eq("id", str(category_id)).execute()
     if not result.data:
         raise HTTPException(404, "Categoría no encontrada")
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "update",
+        "entity": "categories",
+        "entity_id": str(category_id),
+        "diff_json": {"changes": {k: str(v) if not isinstance(v, (str, bool, int, float, type(None))) else v for k, v in data.items()}},
+    }).execute()
     return result.data[0]
 
 
 @router.delete("/{category_id}", status_code=204)
 def delete_category(category_id: UUID, admin=Depends(require_admin)):
     sb = get_supabase()
+    existing = sb.table("categories").select("name, slug").eq("id", str(category_id)).limit(1).execute().data
+    if not existing:
+        raise HTTPException(404, "Categoría no encontrada")
     products = sb.table("products").select("id").eq("category_id", str(category_id)).limit(1).execute()
     if products.data:
         raise HTTPException(409, "La categoría tiene productos asignados. Reasígnalos antes de eliminar.")
     sb.table("categories").delete().eq("id", str(category_id)).execute()
+    sb.table("audit_logs").insert({
+        "actor_id": admin["id"],
+        "action": "delete",
+        "entity": "categories",
+        "entity_id": str(category_id),
+        "diff_json": {"deleted": existing[0]},
+    }).execute()
 
 
 @router.post("/{category_id}/image")
