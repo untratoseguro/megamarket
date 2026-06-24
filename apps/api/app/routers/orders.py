@@ -1,10 +1,11 @@
 from decimal import Decimal
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.supabase import get_supabase
 from app.deps.auth import require_auth
-from app.schemas.order import OrderCreateIn, OrderItemOut, OrderOut, OrderDetailOut
+from app.schemas.order import OrderCreateIn, OrderDetailOut, OrderItemOut, OrderOut
 
 router = APIRouter(tags=["orders"])
 

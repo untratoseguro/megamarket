@@ -1,0 +1,158 @@
+name: API — CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+
+env:
+  # Ajustar antes del primer deploy
+  GCP_REGION: us-central1
+  CLOUD_RUN_SERVICE: megamarket-api
+  AR_REPO: megamarket           # Artifact Registry repository name
+  IMAGE_NAME: api
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Lint + typecheck + test
+  # Corre en PRs y en pushes a main
+  # ────────────────────────────────────────────────────────────────────────────
+  lint-and-test:
+    name: Lint, typecheck & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dev dependencies
+        run: uv pip install --system ".[dev]"
+
+      - name: Lint — ruff check
+        run: ruff check app/
+
+      - name: Typecheck — mypy
+        run: mypy app/ --ignore-missing-imports
+
+      - name: Test — pytest
+        run: pytest tests/ -v --tb=short
+        env:
+          # Valores dummy para CI: los smoke tests no usan DB real
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_ANON_KEY: dummy-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: dummy-service-role-key
+          SUPABASE_JWT_SECRET: dummy-jwt-secret-32-chars-minimum
+          ANTHROPIC_API_KEY: sk-ant-dummy
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Build Docker + Deploy a Cloud Run
+  # Solo corre en push a main (no en PRs)
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-deploy:
+    name: Build Docker & Deploy to Cloud Run
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write    # Necesario para Workload Identity Federation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Autenticacion GCP via Workload Identity Federation (keyless) ──────
+      # Configuracion unica en GCP:
+      #   gcloud iam workload-identity-pools create "github-pool" --location=global
+      #   gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+      #     --workload-identity-pool=github-pool --location=global \
+      #     --issuer-uri="https://token.actions.githubusercontent.com" \
+      #     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository"
+      #   gcloud iam service-accounts add-iam-policy-binding SA_EMAIL \
+      #     --role=roles/iam.workloadIdentityUser \
+      #     --member="principalSet://iam.googleapis.com/POOL_NAME/attribute.repository/ORG/REPO"
+      #
+      # Secrets de GitHub a configurar (Settings -> Secrets -> Actions):
+      #   GCP_WORKLOAD_IDENTITY_PROVIDER  (formato: projects/NUM/locations/global/workloadIdentityPools/POOL/providers/PROV)
+      #   GCP_SERVICE_ACCOUNT             (formato: sa-name@project-id.iam.gserviceaccount.com)
+      #   GCP_PROJECT_ID
+      - id: auth
+        name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        id: build
+        run: |
+          IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.IMAGE_NAME }}"
+          docker build -t "${IMAGE}:${{ github.sha }}" -t "${IMAGE}:latest" apps/api/
+          docker push "${IMAGE}:${{ github.sha }}"
+          docker push "${IMAGE}:latest"
+          echo "image=${IMAGE}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.CLOUD_RUN_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ steps.build.outputs.image }}
+          flags: |
+            --min-instances=0
+            --max-instances=10
+            --memory=512Mi
+            --cpu=1
+            --port=8080
+            --allow-unauthenticated
+            --timeout=60
+            --concurrency=80
+          # Secretos inyectados desde Secret Manager como variables de entorno.
+          # Los secretos deben existir ANTES del primer deploy (ver infra/cloud-run/setup-secrets.sh).
+          # Formato: ENV_VAR_NAME=secret-name:version
+          secrets: |
+            SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest
+            SUPABASE_JWT_SECRET=supabase-jwt-secret:latest
+            PAYPAL_CLIENT_ID=paypal-client-id:latest
+            PAYPAL_CLIENT_SECRET=paypal-client-secret:latest
+            PAYPAL_WEBHOOK_ID=paypal-webhook-id:latest
+            WOMPI_PRIVATE_KEY=wompi-private-key:latest
+            WOMPI_EVENT_SECRET=wompi-event-secret:latest
+            ANTHROPIC_API_KEY=anthropic-api-key:latest
+          # Variables de entorno sin secret (ajustar a valores de produccion)
+          env_vars: |
+            ENVIRONMENT=production
+            DEBUG=false
+            CORS_ORIGINS=https://megamarket.vercel.app
+            FRONTEND_URL=https://megamarket.vercel.app
+            SUPABASE_URL=https://cjymqadfiubmijrbvvym.supabase.co
+            PAYPAL_BASE_URL=https://api-m.paypal.com
+            WOMPI_BASE_URL=https://production.wompi.co/v1
+            WOMPI_COP_PER_USD=4100
+            ANTHROPIC_MODEL=claude-sonnet-4-6
+
+      - name: Show Cloud Run URL
+        run: |
+          echo "Deployed to: $(gcloud run services describe ${{ env.CLOUD_RUN_SERVICE }} --region=${{ env.GCP_REGION }} --format='value(status.url)')"

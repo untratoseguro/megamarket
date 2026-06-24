@@ -1,7 +1,7 @@
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 from app.core.supabase import get_supabase
 from app.deps.auth import require_auth

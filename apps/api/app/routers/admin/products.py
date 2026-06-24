@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from app.core.supabase import get_supabase
 from app.deps.auth import require_admin
 from app.schemas.admin import ProductAdminOut, ProductIn, ProductVariantIn
-from app.schemas.product import ProductDetail, ProductVariantSchema, ProductsResponse, ProductSummary
+from app.schemas.product import (
+    ProductDetail,
+    ProductsResponse,
+    ProductSummary,
+    ProductVariantSchema,
+)
 
 router = APIRouter(tags=["admin-products"])
 

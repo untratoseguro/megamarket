@@ -1,4 +1,5 @@
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.supabase import get_supabase

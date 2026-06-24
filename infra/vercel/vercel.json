@@ -1,0 +1,10 @@
+{
+  "comment": "Referencia de configuracion de Vercel para el monorepo MegaMarket.",
+  "comment2": "Copiar este archivo a la raiz del repo si se usa el CLI de Vercel desde la raiz.",
+  "comment3": "Si se conecta via dashboard, configurar Root Directory = apps/web manualmente.",
+  "rootDirectory": "apps/web",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "framework": "nextjs"
+}

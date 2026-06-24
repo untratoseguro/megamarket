@@ -5,9 +5,18 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.rate_limit import limiter
 from app.core.settings import settings
-from app.routers import categories, health, products, cart, favorites, orders, payments, recommendations
+from app.routers import (
+    assistant,
+    cart,
+    categories,
+    favorites,
+    health,
+    orders,
+    payments,
+    products,
+    recommendations,
+)
 from app.routers.admin import router as admin_router
-from app.routers import assistant
 
 app = FastAPI(
     title=settings.app_name,

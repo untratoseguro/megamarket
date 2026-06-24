@@ -220,7 +220,7 @@ def _process_import(job_id: str, admin_id: str, bucket_path: str, filename: str)
             validated = ProductIn(**product_data)
         except (ValidationError, ValueError, TypeError) as exc:
             for err in (exc.errors() if hasattr(exc, "errors") else [{"loc": ("_row",), "msg": str(exc)}]):
-                field = ".".join(str(l) for l in err.get("loc", ("_row",)))
+                field = ".".join(str(loc) for loc in err.get("loc", ("_row",)))
                 row_errors.append({"row": row_num, "field": field, "error": err.get("msg", str(err))})
 
         if row_errors:

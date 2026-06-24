@@ -1,0 +1,93 @@
+name: Web — CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Lint + typecheck + build
+  # Corre en PRs y en pushes a main
+  # ────────────────────────────────────────────────────────────────────────────
+  lint-and-build:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint — next lint
+        run: npm run lint
+
+      - name: Typecheck — tsc
+        run: npx tsc --noEmit
+
+      - name: Build — next build
+        run: npm run build
+        env:
+          # Variables publicas necesarias para el build de Next.js.
+          # NUNCA poner aqui service_role, PayPal secret, Wompi private key, etc.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # URL de la API en produccion (Cloud Run)
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Deploy a Vercel
+  # Solo corre en push a main (no en PRs)
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Vercel
+    needs: lint-and-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/web
+
+      # Secrets de GitHub a configurar (Settings -> Secrets -> Actions):
+      #   VERCEL_TOKEN        — token personal de Vercel (Account Settings -> Tokens)
+      #   VERCEL_ORG_ID       — obtenido con: vercel link (en .vercel/project.json)
+      #   VERCEL_PROJECT_ID   — obtenido con: vercel link (en .vercel/project.json)
+      #
+      # Variables de entorno en Vercel (dashboard o via CLI):
+      #   NEXT_PUBLIC_SUPABASE_URL
+      #   NEXT_PUBLIC_SUPABASE_ANON_KEY
+      #   NEXT_PUBLIC_API_URL      (URL de Cloud Run)
+      #   NEXT_PUBLIC_SITE_URL     (URL de Vercel: https://megamarket.vercel.app)
+      - name: Deploy to Vercel (production)
+        working-directory: apps/web
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

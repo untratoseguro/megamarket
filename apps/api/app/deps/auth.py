@@ -60,7 +60,9 @@ def require_auth(
     payload = _decode_token(credentials.credentials)
     user_id: str = payload.get("sub", "")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token sin sub")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token sin sub"
+        )
     return _fetch_profile(user_id)
 
 

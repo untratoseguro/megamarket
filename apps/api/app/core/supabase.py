@@ -16,5 +16,7 @@ def get_supabase() -> Client:
                 "SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY son requeridos. "
                 "Copia .env.example a .env y completa las variables."
             )
-        _client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        _client = create_client(
+            settings.supabase_url, settings.supabase_service_role_key
+        )
     return _client
