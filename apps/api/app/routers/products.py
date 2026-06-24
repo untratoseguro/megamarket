@@ -40,7 +40,8 @@ def list_products(filters: ProductsFilter = Depends()) -> ProductsResponse:
     - category_id: UUID
     - is_featured: bool
     - min_price / max_price: decimal
-    - q: búsqueda por título (ILIKE)
+    - q: búsqueda full-text (tsvector + plainto_tsquery, 'spanish'). Resultados
+         ordenados por ts_rank descendente. Sin q: orden por created_at desc.
     - attributes: JSON string con atributos filtrables, ej: {"brand":"Samsung"}
       → usa índice GIN (@> operator) si category_id también está presente,
         las claves se validan contra category_attributes.
@@ -60,7 +61,33 @@ def list_products(filters: ProductsFilter = Depends()) -> ProductsResponse:
                     detail=f"Atributos no filtrables para esta categoría: {sorted(unknown)}",
                 )
 
-    # Construcción de la query
+    # ── Full-text search: usa RPC con ts_rank para relevancia ────────────────
+    if filters.q:
+        params = {
+            "search_term": filters.q,
+            "p_category_id": str(filters.category_id) if filters.category_id else None,
+            "p_is_featured": filters.is_featured,
+            "p_min_price": float(filters.min_price) if filters.min_price is not None else None,
+            "p_max_price": float(filters.max_price) if filters.max_price is not None else None,
+            "p_attrs": attrs_dict,
+            "p_limit": filters.page_size,
+            "p_offset": (filters.page - 1) * filters.page_size,
+        }
+        rpc_result = sb.rpc("search_products", params).execute()
+        rows = rpc_result.data or []
+        total = int(rows[0]["total_count"]) if rows else 0
+        items = [
+            ProductSummary(**{k: v for k, v in r.items() if k != "total_count"})
+            for r in rows
+        ]
+        return ProductsResponse(
+            items=items,
+            total=total,
+            page=filters.page,
+            page_size=filters.page_size,
+        )
+
+    # ── Sin búsqueda: query builder estándar, orden por created_at ───────────
     q = (
         sb.table("products")
         .select(
@@ -80,10 +107,7 @@ def list_products(filters: ProductsFilter = Depends()) -> ProductsResponse:
         q = q.gte("price", str(filters.min_price))
     if filters.max_price is not None:
         q = q.lte("price", str(filters.max_price))
-    if filters.q:
-        q = q.ilike("title", f"*{filters.q}*")
     if attrs_dict:
-        # @> en jsonb → usa el índice GIN
         q = q.filter("attributes_json", "cs", json.dumps(attrs_dict))
 
     start = (filters.page - 1) * filters.page_size
