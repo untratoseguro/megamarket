@@ -83,8 +83,8 @@ export default function CheckoutPage() {
     setSubmitting(true)
     setError('')
     try {
-      await authFetch('/orders', { method: 'POST', body: JSON.stringify({}) })
-      router.push('/perfil/ordenes')
+      const order = await authFetch<{ id: string }>('/orders', { method: 'POST', body: JSON.stringify({}) })
+      router.push(`/pedido/${order.id}`)
     } catch {
       setError('Error al crear el pedido. Intenta de nuevo.')
       setSubmitting(false)
@@ -195,10 +195,10 @@ export default function CheckoutPage() {
           disabled={submitting}
           className="mt-6 w-full bg-indigo-600 text-white font-semibold py-4 rounded-2xl text-base hover:bg-indigo-700 transition-colors disabled:opacity-60"
         >
-          {submitting ? 'Creando pedido…' : 'Confirmar pedido'}
+          {submitting ? 'Preparando pedido…' : 'Proceder al pago →'}
         </button>
         <p className="text-center text-xs text-zinc-400 mt-3">
-          El pedido quedará en estado pendiente. El pago se procesa por separado.
+          Elegirás el método de pago en el siguiente paso.
         </p>
       </div>
     </div>

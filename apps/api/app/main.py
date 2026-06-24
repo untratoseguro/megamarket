@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.settings import settings
-from app.routers import categories, health, products, cart, favorites, orders
+from app.routers import categories, health, products, cart, favorites, orders, payments
 
 app = FastAPI(
     title=settings.app_name,
@@ -26,3 +26,4 @@ app.include_router(products.router, prefix="/products")
 app.include_router(cart.router, prefix="/cart")
 app.include_router(favorites.router, prefix="/favorites")
 app.include_router(orders.router, prefix="/orders")
+app.include_router(payments.router, prefix="/payments")

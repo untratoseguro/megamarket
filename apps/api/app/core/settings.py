@@ -25,6 +25,22 @@ class Settings(BaseSettings):
     # JWT secret: Settings → API → JWT Settings en el dashboard de Supabase
     supabase_jwt_secret: str = ""
 
+    # PayPal — usa sandbox.paypal.com para dev, api-m.paypal.com para prod
+    paypal_client_id: str = ""
+    paypal_client_secret: str = ""
+    paypal_webhook_id: str = ""  # ID del webhook registrado en el dashboard de PayPal
+    paypal_base_url: str = "https://api-m.sandbox.paypal.com"
+
+    # Wompi (Colombia, COP). El monto USD se convierte usando la tasa configurada.
+    wompi_private_key: str = ""
+    wompi_event_secret: str = ""  # "Llave de eventos" en el dashboard de Wompi
+    wompi_base_url: str = "https://sandbox.wompi.co/v1"
+    # Tipo de cambio aproximado COP/USD para convertir totales de la orden
+    wompi_cop_per_usd: float = 4100.0
+
+    # URL base del frontend (para return_url / redirect_url de pagos)
+    frontend_url: str = "http://localhost:3000"
+
     def get_cors_origins(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
