@@ -81,7 +81,7 @@ def list_products(filters: ProductsFilter = Depends()) -> ProductsResponse:
     if filters.max_price is not None:
         q = q.lte("price", str(filters.max_price))
     if filters.q:
-        q = q.ilike("title", f"%{filters.q}%")
+        q = q.ilike("title", f"*{filters.q}*")
     if attrs_dict:
         # @> en jsonb → usa el índice GIN
         q = q.filter("attributes_json", "cs", json.dumps(attrs_dict))
