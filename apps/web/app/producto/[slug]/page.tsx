@@ -4,6 +4,8 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import { formatUSD, discountPct, placeholderColor } from '@/lib/utils'
 import type { ProductVariant } from '@/types'
 import type { Metadata } from 'next'
+import AddToCartButton from '@/components/AddToCartButton'
+import FavoriteButton from '@/components/FavoriteButton'
 
 type Props = { params: { slug: string } }
 
@@ -168,23 +170,15 @@ export default async function ProductoPage({ params }: Props) {
 
           {/* CTA */}
           <div className="space-y-3 mb-6">
-            <button
-              disabled
-              title="Carrito disponible en la próxima fase"
-              className="w-full bg-indigo-100 text-indigo-400 font-semibold py-4 rounded-2xl text-base cursor-not-allowed select-none"
-            >
-              Agregar al carrito
-            </button>
-            <button
-              disabled
-              title="Comprar disponible en la próxima fase"
-              className="w-full bg-zinc-100 text-zinc-400 font-semibold py-3 rounded-2xl text-sm cursor-not-allowed select-none"
-            >
-              Comprar ahora
-            </button>
-            <p className="text-center text-xs text-zinc-400">
-              Carrito y checkout disponibles próximamente
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <AddToCartButton
+                  productId={product.id}
+                  disabled={product.stock_quantity === 0}
+                />
+              </div>
+              <FavoriteButton productId={product.id} />
+            </div>
           </div>
 
           {/* SKU */}

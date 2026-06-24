@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { formatUSD, discountPct, placeholderColor } from '@/lib/utils'
 import type { ProductSummary } from '@/types'
+import AddToCartButton from './AddToCartButton'
+import FavoriteButton from './FavoriteButton'
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
   const full = Math.round(rating)
@@ -23,8 +25,8 @@ export default function ProductCard({ product }: { product: ProductSummary }) {
   const letter = product.title[0]?.toUpperCase() ?? '?'
 
   return (
-    <Link href={`/producto/${product.slug}`} className="group block">
-      <article className="bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+    <article className="bg-white border border-zinc-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+      <Link href={`/producto/${product.slug}`} className="group block">
         <div className="relative aspect-square flex items-center justify-center" style={{ background: bg }}>
           <span className="text-7xl font-black text-white/25 select-none">{letter}</span>
           {product.is_featured && (
@@ -39,7 +41,7 @@ export default function ProductCard({ product }: { product: ProductSummary }) {
           )}
         </div>
 
-        <div className="p-4">
+        <div className="p-4 pb-2">
           {product.brand && (
             <p className="text-[11px] text-zinc-400 font-medium uppercase tracking-wide mb-1">{product.brand}</p>
           )}
@@ -53,22 +55,21 @@ export default function ProductCard({ product }: { product: ProductSummary }) {
             </div>
           )}
 
-          <div className="flex items-baseline gap-2 mb-3">
+          <div className="flex items-baseline gap-2">
             <span className="text-base font-bold text-zinc-900">{formatUSD(product.price)}</span>
             {product.compare_at_price && (
               <span className="text-sm text-zinc-400 line-through">{formatUSD(product.compare_at_price)}</span>
             )}
           </div>
-
-          <button
-            disabled
-            title="Disponible en la próxima fase"
-            className="w-full py-2 text-sm font-medium bg-zinc-100 text-zinc-400 rounded-xl cursor-not-allowed select-none"
-          >
-            Agregar al carrito
-          </button>
         </div>
-      </article>
-    </Link>
+      </Link>
+
+      <div className="px-4 pb-4 pt-3 flex items-center gap-2">
+        <div className="flex-1">
+          <AddToCartButton productId={product.id} />
+        </div>
+        <FavoriteButton productId={product.id} />
+      </div>
+    </article>
   )
 }

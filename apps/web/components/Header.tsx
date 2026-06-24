@@ -4,20 +4,36 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { authFetch } from '@/lib/api-auth'
 import type { User } from '@supabase/supabase-js'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      if (user) {
+        authFetch<{ item_count: number }>('/cart')
+          .then((cart) => setCartCount(cart.item_count))
+          .catch(() => {})
+      }
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        authFetch<{ item_count: number }>('/cart')
+          .then((cart) => setCartCount(cart.item_count))
+          .catch(() => {})
+      } else {
+        setCartCount(0)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -69,12 +85,39 @@ export default function Header() {
           </div>
         </form>
 
-        <nav className="flex items-center gap-5 text-sm font-medium">
+        <nav className="flex items-center gap-4 text-sm font-medium">
           <Link
             href="/catalogo"
             className={`hidden sm:block transition-colors ${pathname?.startsWith('/catalogo') ? 'text-indigo-600' : 'text-zinc-600 hover:text-indigo-600'}`}
           >
             Catálogo
+          </Link>
+
+          {user && (
+            <Link
+              href="/favoritos"
+              aria-label="Favoritos"
+              className={`hidden sm:block transition-colors ${pathname === '/favoritos' ? 'text-red-500' : 'text-zinc-500 hover:text-red-500'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+            </Link>
+          )}
+
+          <Link
+            href="/checkout"
+            aria-label="Carrito"
+            className={`relative transition-colors ${pathname === '/checkout' ? 'text-indigo-600' : 'text-zinc-500 hover:text-indigo-600'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
           </Link>
 
           {user ? (
@@ -101,6 +144,20 @@ export default function Header() {
                     className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                   >
                     Mi perfil
+                  </Link>
+                  <Link
+                    href="/perfil/ordenes"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    Mis pedidos
+                  </Link>
+                  <Link
+                    href="/favoritos"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  >
+                    Favoritos
                   </Link>
                   <button
                     onClick={handleLogout}

@@ -103,7 +103,7 @@ export default function PerfilPage() {
             <div className="flex justify-between text-sm border-t border-zinc-100 pt-3">
               <dt className="text-zinc-500">Miembro desde</dt>
               <dd className="text-zinc-900 font-medium">
-                {new Date(user.created_at).toLocaleDateString('es-CO', {
+                {new Date(user.created_at).toLocaleDateString('es-SV', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -117,18 +117,23 @@ export default function PerfilPage() {
           </dl>
         </div>
 
-        {/* Placeholder sections */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white border border-zinc-200 border-dashed rounded-2xl p-6 text-center opacity-60">
+          <Link
+            href="/perfil/ordenes"
+            className="bg-white border border-zinc-200 rounded-2xl p-6 text-center hover:border-indigo-200 hover:shadow-sm transition-all group"
+          >
             <p className="text-3xl mb-2">📦</p>
-            <h3 className="text-sm font-semibold text-zinc-700 mb-1">Mis pedidos</h3>
-            <p className="text-xs text-zinc-400">Disponible en Fase 4</p>
-          </div>
-          <div className="bg-white border border-zinc-200 border-dashed rounded-2xl p-6 text-center opacity-60">
+            <h3 className="text-sm font-semibold text-zinc-700 group-hover:text-indigo-700 mb-1">Mis pedidos</h3>
+            <p className="text-xs text-zinc-400">Ver historial de pedidos</p>
+          </Link>
+          <Link
+            href="/favoritos"
+            className="bg-white border border-zinc-200 rounded-2xl p-6 text-center hover:border-indigo-200 hover:shadow-sm transition-all group"
+          >
             <p className="text-3xl mb-2">❤️</p>
-            <h3 className="text-sm font-semibold text-zinc-700 mb-1">Favoritos</h3>
-            <p className="text-xs text-zinc-400">Disponible en Fase 4</p>
-          </div>
+            <h3 className="text-sm font-semibold text-zinc-700 group-hover:text-indigo-700 mb-1">Favoritos</h3>
+            <p className="text-xs text-zinc-400">Ver productos guardados</p>
+          </Link>
         </div>
 
         {/* Actions */}
