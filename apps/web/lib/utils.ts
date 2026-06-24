@@ -4,7 +4,7 @@ export function formatUSD(amount: number): string {
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)
+  }).format(amount / 100)
 }
 
 export function discountPct(price: number, compareAt: number): number {

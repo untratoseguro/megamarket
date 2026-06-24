@@ -37,8 +37,8 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Sea
     getProducts({
       q,
       category_id,
-      min_price: min_price ? Number(min_price) : undefined,
-      max_price: max_price ? Number(max_price) : undefined,
+      min_price: min_price ? Math.round(Number(min_price) * 100) : undefined,
+      max_price: max_price ? Math.round(Number(max_price) * 100) : undefined,
       is_featured: is_featured === 'true' ? true : undefined,
       page: pageNum,
       page_size: pageSize,

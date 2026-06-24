@@ -74,8 +74,8 @@ export default async function CategoriaPage({ params, searchParams }: Props) {
 
   const productsRes = await getProducts({
     category_id: category.id,
-    min_price: searchParams.min_price ? Number(searchParams.min_price) : undefined,
-    max_price: searchParams.max_price ? Number(searchParams.max_price) : undefined,
+    min_price: searchParams.min_price ? Math.round(Number(searchParams.min_price) * 100) : undefined,
+    max_price: searchParams.max_price ? Math.round(Number(searchParams.max_price) * 100) : undefined,
     page: pageNum,
     page_size: pageSize,
   }).catch(() => ({ items: [] as never[], total: 0, page: pageNum, page_size: pageSize }))
