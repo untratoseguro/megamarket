@@ -116,7 +116,7 @@ export default async function CategoriaPage({ params, searchParams }: Props) {
               {/* Price */}
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
-                  Precio (COP)
+                  Precio (USD)
                 </label>
                 <div className="flex gap-2">
                   <input

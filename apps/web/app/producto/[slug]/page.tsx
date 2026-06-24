@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getProductBySlug, NotFoundError } from '@/lib/api'
 import Breadcrumbs from '@/components/Breadcrumbs'
-import { formatCOP, discountPct, placeholderColor } from '@/lib/utils'
+import { formatUSD, discountPct, placeholderColor } from '@/lib/utils'
 import type { ProductVariant } from '@/types'
 import type { Metadata } from 'next'
 
@@ -46,7 +46,7 @@ function VariantTable({ variants }: { variants: ProductVariant[] }) {
                 ))}
                 <td className="px-4 py-3 font-mono text-xs text-zinc-400">{v.sku}</td>
                 <td className="px-4 py-3 text-right font-semibold text-zinc-900">
-                  {v.price ? formatCOP(v.price) : '—'}
+                  {v.price ? formatUSD(v.price) : '—'}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -146,17 +146,17 @@ export default async function ProductoPage({ params }: Props) {
           <div className="bg-zinc-50 rounded-2xl p-6 mb-6">
             <div className="flex items-baseline gap-3">
               <span className="text-4xl font-extrabold text-zinc-900">
-                {formatCOP(product.price)}
+                {formatUSD(product.price)}
               </span>
               {product.compare_at_price && (
                 <span className="text-lg text-zinc-400 line-through">
-                  {formatCOP(product.compare_at_price)}
+                  {formatUSD(product.compare_at_price)}
                 </span>
               )}
             </div>
             {discount !== null && (
               <p className="text-sm text-green-600 font-medium mt-1">
-                Ahorras {formatCOP(product.compare_at_price! - product.price)} ({discount}% OFF)
+                Ahorras {formatUSD(product.compare_at_price! - product.price)} ({discount}% OFF)
               </p>
             )}
             <p className={`text-sm mt-3 font-medium ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>

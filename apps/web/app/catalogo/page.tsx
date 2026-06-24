@@ -114,7 +114,7 @@ export default async function CatalogoPage({ searchParams }: { searchParams: Sea
             {/* Price range */}
             <div>
               <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
-                Precio (COP)
+                Precio (USD)
               </label>
               <div className="flex gap-2">
                 <input

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { formatCOP, discountPct, placeholderColor } from '@/lib/utils'
+import { formatUSD, discountPct, placeholderColor } from '@/lib/utils'
 import type { ProductSummary } from '@/types'
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
@@ -54,9 +54,9 @@ export default function ProductCard({ product }: { product: ProductSummary }) {
           )}
 
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-base font-bold text-zinc-900">{formatCOP(product.price)}</span>
+            <span className="text-base font-bold text-zinc-900">{formatUSD(product.price)}</span>
             {product.compare_at_price && (
-              <span className="text-sm text-zinc-400 line-through">{formatCOP(product.compare_at_price)}</span>
+              <span className="text-sm text-zinc-400 line-through">{formatUSD(product.compare_at_price)}</span>
             )}
           </div>
 

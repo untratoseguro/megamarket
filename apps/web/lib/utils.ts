@@ -1,9 +1,9 @@
-export function formatCOP(amount: number): string {
-  return new Intl.NumberFormat('es-CO', {
+export function formatUSD(amount: number): string {
+  return new Intl.NumberFormat('es-SV', {
     style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 
