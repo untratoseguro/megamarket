@@ -353,7 +353,7 @@ function OrderConfirmation({ orderId }: { orderId: string }) {
         body: JSON.stringify({ order_id: order.id }),
       })
       window.location.href = resp.approval_url
-    } catch (err) {
+    } catch {
       setPayError('No se pudo conectar con PayPal. Intenta de nuevo.')
       setLoadingPayment(null)
     }
@@ -369,7 +369,7 @@ function OrderConfirmation({ orderId }: { orderId: string }) {
         body: JSON.stringify({ order_id: order.id }),
       })
       window.location.href = resp.redirect_url
-    } catch (err) {
+    } catch {
       setPayError('No se pudo conectar con Wompi. Intenta de nuevo.')
       setLoadingPayment(null)
     }
