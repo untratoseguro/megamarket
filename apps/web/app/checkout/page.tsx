@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { authFetch } from '@/lib/api-auth'
 import { formatUSD } from '@/lib/utils'
+import RecommendationStrip from '@/components/RecommendationStrip'
 
 interface CartItem {
   id: string
@@ -201,6 +202,8 @@ export default function CheckoutPage() {
           Elegirás el método de pago en el siguiente paso.
         </p>
       </div>
+      {/* Recomendaciones — sin LLM, query directa a /recommendations */}
+      <RecommendationStrip basedOn="cart" title="También te puede interesar" />
     </div>
   )
 }

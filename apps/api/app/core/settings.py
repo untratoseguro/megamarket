@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     # Tipo de cambio aproximado COP/USD para convertir totales de la orden
     wompi_cop_per_usd: float = 4100.0
 
+    # Anthropic — Claude API
+    anthropic_api_key: str = ""
+    # Modelo a usar para el asistente conversacional
+    anthropic_model: str = "claude-sonnet-4-6"
+
     # URL base del frontend (para return_url / redirect_url de pagos)
     frontend_url: str = "http://localhost:3000"
 

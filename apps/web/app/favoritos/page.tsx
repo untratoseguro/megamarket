@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { authFetch } from '@/lib/api-auth'
 import { formatUSD, placeholderColor } from '@/lib/utils'
+import RecommendationStrip from '@/components/RecommendationStrip'
 
 interface Favorite {
   id: string
@@ -109,6 +110,9 @@ export default function FavoritosPage() {
           })}
         </div>
       )}
+
+      {/* Recomendaciones — sin LLM, query directa a /recommendations */}
+      {favorites.length > 0 && <RecommendationStrip basedOn="favorites" title="Basado en tus favoritos" />}
     </div>
   )
 }
