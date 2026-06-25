@@ -9,7 +9,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://*.run.app",
       "font-src 'self'",
       "frame-src 'none'",
       "object-src 'none'",
